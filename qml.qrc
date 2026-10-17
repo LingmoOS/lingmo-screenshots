@@ -1,13 +1,27 @@
 <RCC>
     <qresource prefix="/">
-        <file>qml/main.qml</file>
-        <file>images/cancel.svg</file>
-        <file>qml/ImageButton.qml</file>
-        <file>images/ok.svg</file>
-        <file>images/save.svg</file>
-        <file>qml/DragRect.qml</file>
-        <file>qml/ResizeBorder.qml</file>
-        <file>qml/MoveArea.qml</file>
-        <file>images/ocr.svg</file>
+        <file>qml/Overlay.qml</file>
+        <file>qml/EditorWindow.qml</file>
+        <file>qml/CaptureEditor.qml</file>
+        <file>qml/SelectionFrame.qml</file>
+        <file>qml/Magnifier.qml</file>
+        <file>qml/ModeBar.qml</file>
+        <file>qml/ToolsCard.qml</file>
+        <file>qml/ActionsCard.qml</file>
+        <file>qml/ColorPopup.qml</file>
+        <file>qml/HelpCard.qml</file>
+        <file>qml/TextResultCard.qml</file>
+        <file>qml/PinWindow.qml</file>
+        <file>qml/ScrollIndicator.qml</file>
+        <file>qml/RecordingIndicator.qml</file>
+        <file>qml/Launcher.qml</file>
+        <file>qml/CapturePage.qml</file>
+        <file>qml/HistoryPage.qml</file>
+        <file>qml/SettingsPage.qml</file>
+        <file>qml/SettingRow.qml</file>
+        <file>images/record.svg</file>
+        <file>images/sidebar/capture.svg</file>
+        <file>images/sidebar/history.svg</file>
+        <file>images/sidebar/settings.svg</file>
     </qresource>
 </RCC>
