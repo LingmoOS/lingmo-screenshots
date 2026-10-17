@@ -23,6 +23,7 @@
 
 #include <xcb/xcb.h>
 #include <xcb/xinput.h>
+#include <xcb/xtest.h>
 
 #include <cstdlib>
 #include <cstring>
@@ -71,18 +72,132 @@ QVector<T> property(xcb_connection_t *c, xcb_window_t window, xcb_atom_t prop, x
     return result;
 }
 
+
+QString windowTitle(xcb_connection_t *c, xcb_window_t window)
+{
+    const xcb_atom_t netName = atom(c, "_NET_WM_NAME");
+    const xcb_atom_t utf8 = atom(c, "UTF8_STRING");
+
+    for (const auto &[prop, type] : { std::pair { netName, utf8 }, std::pair { xcb_atom_t(XCB_ATOM_WM_NAME), xcb_atom_t(XCB_ATOM_STRING) } }) {
+        if (prop == XCB_ATOM_NONE)
+            continue;
+        xcb_get_property_reply_t *reply =
+                xcb_get_property_reply(c, xcb_get_property(c, false, window, prop, type, 0, 1024), nullptr);
+        if (!reply)
+            continue;
+        const int len = xcb_get_property_value_length(reply);
+        QString title;
+        if (reply->type == type && reply->format == 8 && len > 0)
+            title = QString::fromUtf8(static_cast<const char *>(xcb_get_property_value(reply)), len);
+        free(reply);
+        if (!title.isEmpty())
+            return title;
+    }
+    return QString();
+}
+
+// Frame geometry of a managed client window.
+bool frameGeometry(xcb_connection_t *c, xcb_window_t window, bool managed, QRect *result)
+{
+    const xcb_window_t root = rootWindow(c);
+
+    xcb_get_geometry_reply_t *geo = xcb_get_geometry_reply(c, xcb_get_geometry(c, window), nullptr);
+    if (!geo)
+        return false;
+
+    xcb_translate_coordinates_reply_t *pos =
+            xcb_translate_coordinates_reply(c, xcb_translate_coordinates(c, window, root, 0, 0), nullptr);
+    if (!pos) {
+        free(geo);
+        return false;
+    }
+
+    QRect rect(pos->dst_x, pos->dst_y, geo->width, geo->height);
+    if (!managed)
+        rect.adjust(-geo->border_width, -geo->border_width, geo->border_width, geo->border_width);
+    free(geo);
+    free(pos);
+
+    if (managed) {
+        // left, right, top, bottom
+        const QVector<quint32> frame = property<quint32>(c, window, atom(c, "_NET_FRAME_EXTENTS"), XCB_ATOM_CARDINAL);
+        if (frame.size() == 4)
+            rect.adjust(-int(frame[0]), -int(frame[2]), int(frame[1]), int(frame[3]));
+
+        // Client side decorations: remove the invisible shadow area.
+        const QVector<quint32> gtkFrame = property<quint32>(c, window, atom(c, "_GTK_FRAME_EXTENTS"), XCB_ATOM_CARDINAL);
+        if (gtkFrame.size() == 4)
+            rect.adjust(int(gtkFrame[0]), int(gtkFrame[2]), -int(gtkFrame[1]), -int(gtkFrame[3]));
+    }
+
+    *result = rect;
+    return rect.width() > 1 && rect.height() > 1;
+}
+
 }
 
 QList<QRect> X11Windows::visibleWindows()
 {
-    QList<QRect> windows;
+    QList<QRect> rects;
+    for (const Window &w : windows())
+        rects.append(w.rect);
+    return rects;
+}
+
+bool X11Windows::activeWindow(Window *window)
+{
+    xcb_connection_t *c = connection();
+    if (!c)
+        return false;
+
+    const QVector<xcb_window_t> active =
+            property<xcb_window_t>(c, rootWindow(c), atom(c, "_NET_ACTIVE_WINDOW"), XCB_ATOM_WINDOW);
+    if (active.isEmpty() || active.first() == XCB_WINDOW_NONE)
+        return false;
+
+    Window w;
+    w.id = active.first();
+    if (!frameGeometry(c, w.id, true, &w.rect))
+        return false;
+    w.title = windowTitle(c, w.id);
+
+    if (window)
+        *window = w;
+    return true;
+}
+
+bool X11Windows::scroll(const QPoint &pos, int clicks)
+{
+    xcb_connection_t *c = connection();
+    if (!c)
+        return false;
+
+    const xcb_query_extension_reply_t *ext = xcb_get_extension_data(c, &xcb_test_id);
+    if (!ext || !ext->present)
+        return false;
+
+    const xcb_window_t root = rootWindow(c);
+    xcb_test_fake_input(c, XCB_MOTION_NOTIFY, 0, XCB_CURRENT_TIME, root, pos.x(), pos.y(), 0);
+
+    // Button 4 scrolls up, 5 down.
+    const uint8_t button = clicks > 0 ? 5 : 4;
+    for (int i = 0; i < qAbs(clicks); ++i) {
+        xcb_test_fake_input(c, XCB_BUTTON_PRESS, button, XCB_CURRENT_TIME, root, 0, 0, 0);
+        xcb_test_fake_input(c, XCB_BUTTON_RELEASE, button, XCB_CURRENT_TIME, root, 0, 0, 0);
+    }
+    xcb_flush(c);
+    return true;
+}
+
+QList<X11Windows::Window> X11Windows::windows()
+{
+    QList<Window> windows;
     xcb_connection_t *c = connection();
 
     if (!c)
         return windows;
 
     const xcb_window_t root = rootWindow(c);
-
     const xcb_atom_t clientListAtom = atom(c, "_NET_CLIENT_LIST_STACKING");
     const xcb_atom_t stateAtom = atom(c, "_NET_WM_STATE");
     const xcb_atom_t hiddenAtom = atom(c, "_NET_WM_STATE_HIDDEN");
@@ -91,8 +206,6 @@ QList<QRect> X11Windows::visibleWindows()
     const xcb_atom_t dockTypeAtom = atom(c, "_NET_WM_WINDOW_TYPE_DOCK");
     const xcb_atom_t currentDesktopAtom = atom(c, "_NET_CURRENT_DESKTOP");
     const xcb_atom_t wmDesktopAtom = atom(c, "_NET_WM_DESKTOP");
-    const xcb_atom_t frameExtentsAtom = atom(c, "_NET_FRAME_EXTENTS");
-    const xcb_atom_t gtkFrameExtentsAtom = atom(c, "_GTK_FRAME_EXTENTS");
 
     // Bottom to top.
     QVector<xcb_window_t> stack = property<xcb_window_t>(c, root, clientListAtom, XCB_ATOM_WINDOW);
@@ -140,37 +253,12 @@ QList<QRect> X11Windows::visibleWindows()
                 continue;
         }
 
-        xcb_get_geometry_reply_t *geo = xcb_get_geometry_reply(c, xcb_get_geometry(c, window), nullptr);
-        if (!geo)
+        Window w;
+        w.id = window;
+        if (!frameGeometry(c, window, managed, &w.rect))
             continue;
-
-        xcb_translate_coordinates_reply_t *pos =
-                xcb_translate_coordinates_reply(c, xcb_translate_coordinates(c, window, root, 0, 0), nullptr);
-        if (!pos) {
-            free(geo);
-            continue;
-        }
-
-        QRect rect(pos->dst_x, pos->dst_y, geo->width, geo->height);
-        if (!managed)
-            rect.adjust(-geo->border_width, -geo->border_width, geo->border_width, geo->border_width);
-        free(geo);
-        free(pos);
-
-        if (managed) {
-            // left, right, top, bottom
-            const QVector<quint32> frame = property<quint32>(c, window, frameExtentsAtom, XCB_ATOM_CARDINAL);
-            if (frame.size() == 4)
-                rect.adjust(-int(frame[0]), -int(frame[2]), int(frame[1]), int(frame[3]));
-
-            // Client side decorations: remove the invisible shadow area.
-            const QVector<quint32> gtkFrame = property<quint32>(c, window, gtkFrameExtentsAtom, XCB_ATOM_CARDINAL);
-            if (gtkFrame.size() == 4)
-                rect.adjust(int(gtkFrame[0]), int(gtkFrame[2]), -int(gtkFrame[1]), -int(gtkFrame[3]));
-        }
-
-        if (rect.width() > 1 && rect.height() > 1)
-            windows.append(rect);
+        w.title = windowTitle(c, window);
+        windows.append(w);
     }
 
     return windows;

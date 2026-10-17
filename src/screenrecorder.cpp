@@ -27,8 +27,9 @@
 #include <QStandardPaths>
 #include <QDesktopServices>
 #include <QUrl>
-#include <QQuickView>
-#include <QQmlContext>
+#include <QQuickItem>
+#include "application.h"
+#include "itemwindow.h"
 #include <QSurfaceFormat>
 #include <QRasterWindow>
 #include <QPainter>
@@ -42,6 +43,7 @@
 #include <QDBusMessage>
 #include <QDBusReply>
 #include <QLoggingCategory>
+#include <QRegularExpression>
 
 #include <signal.h>
 
@@ -118,6 +120,8 @@ private:
 ScreenRecorder::ScreenRecorder(QObject *parent)
     : QObject(parent)
     , m_process(nullptr)
+    , m_converter(nullptr)
+    , m_busy(false)
     , m_stopRequested(false)
     , m_failed(false)
     , m_tickTimer(new QTimer(this))
@@ -150,6 +154,7 @@ ScreenRecorder::ScreenRecorder(QObject *parent)
 
 ScreenRecorder::~ScreenRecorder()
 {
+    delete m_indicator;
     showClicks(false);
 
     if (m_process && m_process->state() != QProcess::NotRunning) {
@@ -227,6 +232,22 @@ QStringList ScreenRecorder::ffmpegArguments(const QString &display, const QRect 
     return args;
 }
 
+QStringList ScreenRecorder::gifArguments(const QString &input, const QString &output)
+{
+    // Two passes in one: a palette made from the clip, then dithering with it.
+    return { QStringLiteral("-hide_banner"), QStringLiteral("-loglevel"), QStringLiteral("error"),
+             QStringLiteral("-y"), QStringLiteral("-i"), input,
+             QStringLiteral("-vf"),
+             QStringLiteral("fps=15,scale='min(1280,iw)':-2:flags=lanczos,split[a][b];"
+                            "[a]palettegen=stats_mode=diff[p];[b][p]paletteuse=dither=bayer:bayer_scale=5"),
+             QStringLiteral("-loop"), QStringLiteral("0"), output };
+}
+
+bool ScreenRecorder::busy() const
+{
+    return m_busy;
+}
+
 bool ScreenRecorder::stopRunningRecording()
 {
     QDBusMessage msg = QDBusMessage::createMethodCall(RECORDER_SERVICE, RECORDER_PATH,
@@ -237,9 +258,10 @@ bool ScreenRecorder::stopRunningRecording()
 
 void ScreenRecorder::start(QScreen *screen, const QRect &rect, const Options &options)
 {
-    if (m_process)
+    if (m_busy)
         return;
 
+    m_busy = true;
     m_screen = screen;
     m_options = options;
     m_stopRequested = false;
@@ -272,8 +294,6 @@ void ScreenRecorder::start(QScreen *screen, const QRect &rect, const Options &op
         return;
     }
     bus.registerObject(RECORDER_PATH, this, QDBusConnection::ExportScriptableSlots);
-    // Allow new screenshots to be taken while recording.
-    bus.unregisterService("com.lingmo.Screenshot");
 
     const QString dirPath = outputDirectory();
     if (!QDir().mkpath(dirPath)) {
@@ -371,7 +391,10 @@ void ScreenRecorder::onFinished(int exitCode, QProcess::ExitStatus exitStatus)
     const QFileInfo file(m_fileName);
 
     if (m_stopRequested && file.exists() && file.size() > 0) {
-        notifySaved();
+        if (m_options.gif)
+            convertToGif();
+        else
+            notifySaved();
     } else {
         if (file.exists() && file.size() == 0)
             QFile::remove(m_fileName);
@@ -441,7 +464,7 @@ void ScreenRecorder::showIndicator()
     QScreen *screen = m_screen ? m_screen.data() : qGuiApp->primaryScreen();
 
     if (!m_indicator) {
-        m_indicator = new QQuickView;
+        m_indicator = new ItemWindow;
         m_indicator->setFlags(Qt::FramelessWindowHint | Qt::WindowStaysOnTopHint
                               | Qt::Tool | Qt::WindowDoesNotAcceptFocus);
         m_indicator->setTitle(tr("Screen recording"));
@@ -449,9 +472,13 @@ void ScreenRecorder::showIndicator()
         format.setAlphaBufferSize(8);
         m_indicator->setFormat(format);
         m_indicator->setColor(Qt::transparent);
-        m_indicator->setResizeMode(QQuickView::SizeViewToRootObject);
-        m_indicator->rootContext()->setContextProperty("recorder", this);
-        m_indicator->setSource(QUrl("qrc:/qml/RecordingIndicator.qml"));
+        // "recorder" is in the root context of the shared engine.
+        QObject *object = Application::instance()->createQml(QStringLiteral("qrc:/qml/RecordingIndicator.qml"),
+                                                             QVariantMap(), this);
+        if (auto *item = qobject_cast<QQuickItem *>(object))
+            m_indicator->setItem(item, true);
+        else
+            delete object;
     }
 
     m_indicator->setScreen(screen);
@@ -604,11 +631,47 @@ void ScreenRecorder::openFolder()
         QDesktopServices::openUrl(QUrl::fromLocalFile(QFileInfo(m_fileName).absolutePath()));
 }
 
+void ScreenRecorder::convertToGif()
+{
+    const QString mp4 = m_fileName;
+    QString gif = mp4;
+    gif.replace(QRegularExpression(QStringLiteral("\\.mp4$")), QStringLiteral(".gif"));
+
+    m_converter = new QProcess(this);
+    m_converter->setProcessChannelMode(QProcess::MergedChannels);
+    connect(m_converter, &QProcess::finished, this, [this, mp4, gif](int exitCode, QProcess::ExitStatus status) {
+        const QByteArray output = m_converter->readAll();
+        m_converter->deleteLater();
+        m_converter = nullptr;
+
+        if (status == QProcess::NormalExit && exitCode == 0 && QFileInfo(gif).size() > 0) {
+            QFile::remove(mp4);
+            m_fileName = gif;
+        } else {
+            // Keep the video: nothing is lost.
+            qCWarning(lcRecorder).noquote() << "GIF conversion failed:" << output.right(1000);
+        }
+        notifySaved();
+    });
+
+    qCInfo(lcRecorder) << "Converting to GIF:" << gif;
+    m_converter->start(QStandardPaths::findExecutable(QStringLiteral("ffmpeg")), gifArguments(mp4, gif));
+}
+
 void ScreenRecorder::finish()
 {
     QDBusConnection bus = QDBusConnection::sessionBus();
     bus.unregisterObject(RECORDER_PATH);
     bus.unregisterService(RECORDER_SERVICE);
+
+    if (m_process) {
+        m_process->disconnect(this);
+        m_process->deleteLater();
+        m_process = nullptr;
+    }
+    m_notificationId = 0;
+    m_elapsedTimer.invalidate();
+    m_busy = false;
 
     emit done();
 }

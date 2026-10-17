@@ -21,12 +21,28 @@
 #include <QList>
 #include <QRect>
 #include <QPoint>
+#include <QString>
 
 namespace X11Windows
 {
-    // Geometries (root window coordinates, native pixels) of the visible
-    // top-level windows, including their decorations. Topmost first.
+    struct Window {
+        quint32 id = 0;
+        QRect rect;      // root window coordinates, native pixels, with decorations
+        QString title;
+    };
+
+    // The visible top-level windows of the current desktop. Topmost first.
+    QList<Window> windows();
+
+    // Geometries of windows(), for convenience.
     QList<QRect> visibleWindows();
+
+    // The focused window (_NET_ACTIVE_WINDOW), with its decorations.
+    bool activeWindow(Window *window);
+
+    // Moves the pointer to pos (root coordinates) and turns the wheel:
+    // clicks > 0 scrolls down, < 0 up. Needs the XTEST extension.
+    bool scroll(const QPoint &pos, int clicks);
 
     // Current pointer position (root coordinates).
     bool pointerPosition(QPoint *pos);

@@ -27,7 +27,7 @@
 
 class QScreen;
 class QTimer;
-class QQuickView;
+class ItemWindow;
 class QSystemTrayIcon;
 
 #define RECORDER_SERVICE "com.lingmo.ScreenRecorder"
@@ -47,6 +47,8 @@ public:
         bool systemAudio = false;
         bool showClicks = false;
         int frameRate = 30;
+        // Convert to an animated GIF when the recording ends (no audio).
+        bool gif = false;
     };
 
     explicit ScreenRecorder(QObject *parent = nullptr);
@@ -62,6 +64,7 @@ public:
                                        const Options &options, const QString &monitorSource,
                                        const QString &fileName);
     static QString defaultMonitorSource();
+    static QStringList gifArguments(const QString &input, const QString &output);
 
     // Asks a recorder running in another process to stop.
     static bool stopRunningRecording();
@@ -74,6 +77,8 @@ public slots:
 
     void stop();
     bool isRecording() const;
+    // Recording, converting, or waiting for the notification actions.
+    bool busy() const;
 
 signals:
     void recordingChanged();
@@ -96,9 +101,12 @@ private:
     void openFolder();
     void finish();
     void showClicks(bool enable);
+    void convertToGif();
 
 private:
     QProcess *m_process;
+    QProcess *m_converter;
+    bool m_busy;
     QPointer<QScreen> m_screen;
     QRect m_rect;
     Options m_options;
@@ -112,7 +120,7 @@ private:
     QTimer *m_killTimer;
     bool m_showingClicks;
 
-    QQuickView *m_indicator;
+    ItemWindow *m_indicator;
     QSystemTrayIcon *m_trayIcon;
 
     uint m_notificationId;

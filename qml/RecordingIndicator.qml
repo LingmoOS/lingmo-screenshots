@@ -25,11 +25,12 @@ Rectangle {
     id: control
 
     width: layout.implicitWidth + LingmoUI.Units.largeSpacing * 2
-    height: 40
-    radius: height / 2
-    color: Qt.rgba(0.12, 0.12, 0.12, 0.92)
+    height: 44
+    radius: LingmoUI.Theme.hugeRadius
+    // Overlay look (see lingmo-widgets' OverlayCard)
+    color: LingmoUI.Theme.backgroundColor
     border.width: 1
-    border.color: Qt.rgba(1, 1, 1, 0.15)
+    border.color: LingmoUI.Theme.darkMode ? Qt.rgba(1, 1, 1, 0.15) : Qt.rgba(0, 0, 0, 0.15)
 
     function formatTime(seconds) {
         var h = Math.floor(seconds / 3600)
@@ -64,7 +65,7 @@ Rectangle {
             width: 12
             height: 12
             radius: 6
-            color: "#E53935"
+            color: LingmoUI.Theme.redColor
 
             SequentialAnimation on opacity {
                 loops: Animation.Infinite
@@ -76,8 +77,9 @@ Rectangle {
 
         Label {
             text: control.formatTime(recorder.elapsed)
-            color: "white"
-            font.family: "monospace"
+            color: LingmoUI.Theme.textColor
+            font.pointSize: LingmoUI.Units.fontBody
+            font.features: { "tnum": 1 }
         }
 
         Rectangle {
@@ -86,7 +88,10 @@ Rectangle {
             implicitWidth: stopRow.implicitWidth + LingmoUI.Units.largeSpacing * 2
             implicitHeight: 28
             radius: height / 2
-            color: stopArea.pressed ? "#b71c1c" : stopArea.containsMouse ? "#d32f2f" : "#E53935"
+            color: stopArea.pressed ? Qt.darker(LingmoUI.Theme.redColor, 1.3)
+                 : stopArea.containsMouse ? Qt.darker(LingmoUI.Theme.redColor, 1.12) : LingmoUI.Theme.redColor
+
+            Behavior on color { ColorAnimation { duration: LingmoUI.Units.veryShortDuration } }
 
             Row {
                 id: stopRow
@@ -98,13 +103,13 @@ Rectangle {
                     width: 10
                     height: 10
                     radius: 2
-                    color: "white"
+                    color: LingmoUI.Theme.highlightedTextColor
                 }
 
                 Label {
                     anchors.verticalCenter: parent.verticalCenter
                     text: qsTr("Stop")
-                    color: "white"
+                    color: LingmoUI.Theme.highlightedTextColor
                 }
             }
 

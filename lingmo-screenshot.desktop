@@ -2,9 +2,36 @@
 Name=Screenshot
 Name[pt_BR]=Captura de tela
 Name[zh_CN]=截图
-Exec=lingmo-screenshot
+GenericName=Screenshot and screen recording
+GenericName[pt_BR]=Captura e gravação de tela
+Comment=Capture, annotate, pin and record the screen
+Comment[pt_BR]=Capture, anote, fixe e grave a tela
+Keywords=screenshot;capture;print;annotate;ocr;record;
+Keywords[pt_BR]=captura;tela;print;anotar;texto;ocr;gravar;
+Exec=lingmo-screenshot launcher
 Icon=lingmo-screenshot
 Terminal=false
 Type=Application
-StartupNotify=true
-Categories=Settings;
+StartupNotify=false
+Categories=Utility;
+Actions=Capture;FullScreen;Record;History;
+
+[Desktop Action Capture]
+Name=New capture
+Name[pt_BR]=Nova captura
+Exec=lingmo-screenshot gui --delay 0.4
+
+[Desktop Action FullScreen]
+Name=Capture all screens
+Name[pt_BR]=Capturar todas as telas
+Exec=lingmo-screenshot full --delay 0.4
+
+[Desktop Action Record]
+Name=Record the screen
+Name[pt_BR]=Gravar a tela
+Exec=lingmo-screenshot record --delay 0.4
+
+[Desktop Action History]
+Name=Recent captures
+Name[pt_BR]=Capturas recentes
+Exec=lingmo-screenshot history
