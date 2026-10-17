@@ -24,7 +24,8 @@
 
 // A window showing one QML item created in the application's shared
 // engine (see Application::createQml). QQuickView would need an engine per
-// window, and LingmoUI's singletons don't survive an engine going away.
+// window; one engine keeps the QML types compiled once and the root context
+// (app, config, history, ocr, recorder) shared by every window.
 class ItemWindow : public QQuickWindow
 {
     Q_OBJECT
