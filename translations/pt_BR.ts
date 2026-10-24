@@ -4,16 +4,22 @@
 <context>
     <name>ActionsCard</name>
     <message>
+        <location filename="../qml/ActionsCard.qml" line="+137"/>
         <source>Send to nearby device</source>
         <translation>Enviar para dispositivo próximo</translation>
     </message>
     <message>
-        <location filename="../qml/ActionsCard.qml" line="+56"/>
+        <location line="-75"/>
         <source>Copy text (Ctrl+T)</source>
         <translation>Copiar texto (Ctrl+T)</translation>
     </message>
     <message>
-        <location line="+6"/>
+        <location line="-6"/>
+        <source>Ask AI about this (Ctrl+I)</source>
+        <translation>Perguntar à IA sobre isto (Ctrl+I)</translation>
+    </message>
+    <message>
+        <location line="+12"/>
         <source>Quick redact: hide all text (Ctrl+Shift+H)</source>
         <translation>Ocultar texto rapidamente (Ctrl+Shift+H)</translation>
     </message>
@@ -48,7 +54,7 @@
         <translation>Enviar para…</translation>
     </message>
     <message>
-        <location line="+6"/>
+        <location line="+13"/>
         <source>Save as… (Ctrl+Shift+S)</source>
         <translation>Salvar como… (Ctrl+Shift+S)</translation>
     </message>
@@ -109,15 +115,43 @@
     </message>
 </context>
 <context>
+    <name>AnswerCard</name>
+    <message>
+        <location filename="../qml/AnswerCard.qml" line="+31"/>
+        <source>Answer about the screen</source>
+        <translation>Resposta sobre a tela</translation>
+    </message>
+    <message>
+        <location line="+45"/>
+        <source>Copy answer</source>
+        <translation>Copiar resposta</translation>
+    </message>
+    <message>
+        <location line="+11"/>
+        <source>Close</source>
+        <translation>Fechar</translation>
+    </message>
+    <message>
+        <location line="+34"/>
+        <source>Analyzed on your computer · %1</source>
+        <translation>Analisado no seu computador · %1</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Analyzed on your computer</source>
+        <translation>Analisado no seu computador</translation>
+    </message>
+</context>
+<context>
     <name>Application</name>
     <message>
-        <location filename="../src/application.cpp" line="+157"/>
+        <location filename="../src/application.cpp" line="+160"/>
         <location line="+4"/>
         <source>Scrolling capture</source>
         <translation>Captura com rolagem</translation>
     </message>
     <message>
-        <location line="+200"/>
+        <location line="+212"/>
         <source>There is no screen %1.</source>
         <translation>Não existe a tela %1.</translation>
     </message>
@@ -137,7 +171,7 @@
         <translation>Editar captura</translation>
     </message>
     <message>
-        <location line="+83"/>
+        <location line="+133"/>
         <source>Unable to create the folder %1.</source>
         <translation>Não foi possível criar a pasta %1.</translation>
     </message>
@@ -193,7 +227,7 @@
         <translation>Não foi possível iniciar o comando.</translation>
     </message>
     <message>
-        <location line="+32"/>
+        <location line="+53"/>
         <source>Saved to %1 and copied to the clipboard.</source>
         <translation>Salva em %1 e copiada para a área de transferência.</translation>
     </message>
@@ -224,14 +258,140 @@
     </message>
 </context>
 <context>
+    <name>AskPanel</name>
+    <message>
+        <location filename="../qml/AskPanel.qml" line="+146"/>
+        <source>Ask about the screen</source>
+        <translation>Perguntar sobre a tela</translation>
+    </message>
+    <message>
+        <location line="+10"/>
+        <source>Lingmo Assistant is not installed</source>
+        <translation>O Assistente Lingmo não está instalado</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Looks at the picture · %1</source>
+        <translation>Vê a imagem · %1</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Reads the text on the screen · %1</source>
+        <translation>Lê o texto da tela · %1</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Starting the local AI…</source>
+        <translation>Iniciando a IA local…</translation>
+    </message>
+    <message>
+        <location line="+13"/>
+        <source>Close (Esc)</source>
+        <translation>Fechar (Esc)</translation>
+    </message>
+    <message>
+        <location line="+99"/>
+        <source>Reading the text in the selection…</source>
+        <translation>Lendo o texto da seleção…</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Looking at the selection…</source>
+        <translation>Olhando a seleção…</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Thinking…</source>
+        <translation>Pensando…</translation>
+    </message>
+    <message>
+        <location line="+52"/>
+        <source>Continue in Assistant</source>
+        <translation>Continuar no Assistente</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Ctrl+Enter</source>
+        <translation>Ctrl+Enter</translation>
+    </message>
+    <message>
+        <location line="+12"/>
+        <source>Copy answer</source>
+        <translation>Copiar resposta</translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <source>Pin the answer on the screen (Ctrl+P)</source>
+        <translation>Fixar a resposta na tela (Ctrl+P)</translation>
+    </message>
+    <message>
+        <location line="+45"/>
+        <source>Recognizing…</source>
+        <translation>Reconhecendo…</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Listening…</source>
+        <translation>Ouvindo…</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Ask a follow-up question…</source>
+        <translation>Faça outra pergunta…</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Ask anything about this area…</source>
+        <translation>Pergunte qualquer coisa sobre esta área…</translation>
+    </message>
+    <message>
+        <location line="+29"/>
+        <source>Stop listening</source>
+        <translation>Parar de ouvir</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Ask by voice</source>
+        <translation>Perguntar por voz</translation>
+    </message>
+    <message>
+        <location line="+10"/>
+        <source>Stop</source>
+        <translation>Parar</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Ask (Enter)</source>
+        <translation>Perguntar (Enter)</translation>
+    </message>
+    <message>
+        <location line="+19"/>
+        <source>Analyzed on your computer · nothing is uploaded</source>
+        <translation>Analisado no seu computador · nada é enviado</translation>
+    </message>
+</context>
+<context>
+    <name>AssistantEngine</name>
+    <message>
+        <location filename="../src/assistantengine.cpp" line="+40"/>
+        <source>The assistant engine couldn&apos;t start. Install or reinstall Lingmo Assistant.</source>
+        <translation>O motor do Assistente não pôde iniciar. Instale ou reinstale o Assistente Lingmo.</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>The assistant engine stopped. Try again.</source>
+        <translation>O motor do Assistente parou. Tente de novo.</translation>
+    </message>
+</context>
+<context>
     <name>CaptureController</name>
     <message>
-        <location filename="../src/capturecontroller.cpp" line="+87"/>
+        <location filename="../src/capturecontroller.cpp" line="+91"/>
         <source>Screenshot</source>
         <translation>Captura de tela</translation>
     </message>
     <message>
-        <location line="+258"/>
+        <location line="+260"/>
         <source>The application was not found.</source>
         <translation>O aplicativo não foi encontrado.</translation>
     </message>
@@ -246,7 +406,7 @@
         <translation>Não foi possível iniciar %1.</translation>
     </message>
     <message>
-        <location line="+33"/>
+        <location line="+43"/>
         <location line="+37"/>
         <source>No text was found in the selection.</source>
         <translation>Nenhum texto foi encontrado na seleção.</translation>
@@ -273,7 +433,7 @@
 <context>
     <name>CaptureEditor</name>
     <message>
-        <location filename="../qml/CaptureEditor.qml" line="+78"/>
+        <location filename="../qml/CaptureEditor.qml" line="+86"/>
         <source>Select and move objects (V)</source>
         <translation>Selecionar e mover objetos (V)</translation>
     </message>
@@ -343,7 +503,7 @@
         <translation>Borracha: clique num objeto para apagá-lo (E)</translation>
     </message>
     <message>
-        <location line="+675"/>
+        <location line="+793"/>
         <source>Text size: %1</source>
         <translation>Tamanho do texto: %1</translation>
     </message>
@@ -353,7 +513,17 @@
         <translation>Espessura: %1</translation>
     </message>
     <message>
-        <location line="+127"/>
+        <location line="+106"/>
+        <source>Circle, scribble over or select what you want to ask about</source>
+        <translation>Circule, rabisque ou selecione o que você quer perguntar</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Esc to close</source>
+        <translation>Esc para fechar</translation>
+    </message>
+    <message>
+        <location line="+120"/>
         <source>Text recognition is not installed</source>
         <translation>O reconhecimento de texto não está instalado</translation>
     </message>
@@ -520,7 +690,7 @@
 <context>
     <name>CommandLine</name>
     <message>
-        <location filename="../src/commandline.cpp" line="+181"/>
+        <location filename="../src/commandline.cpp" line="+185"/>
         <source>--delay needs a number of seconds.</source>
         <translation>--delay precisa de um número de segundos.</translation>
     </message>
@@ -540,7 +710,12 @@
         <translation>--number precisa do número de uma tela (0, 1…).</translation>
     </message>
     <message>
-        <location line="+4"/>
+        <location line="+3"/>
+        <source>--question needs a text.</source>
+        <translation>--question precisa de um texto.</translation>
+    </message>
+    <message>
+        <location line="+5"/>
         <source>Invalid region, use WIDTHxHEIGHT+X+Y.</source>
         <translation>Região inválida, use LARGURAxALTURA+X+Y.</translation>
     </message>
@@ -570,6 +745,7 @@ Commands:
   window       Click a window to capture it (--active: the focused window)
   scroll       Select an area and capture it while it scrolls
   record       Record the screen
+  ask          Select an area and ask the AI about it (on this computer)
   launcher     Open the Screenshot window
   history      Show the recent captures
   config       Open the settings
@@ -582,7 +758,8 @@ Options:
       --pin              Pin the capture on the screen
   -a, --active           window: capture the focused window
   -n, --number N         screen: capture screen N
-      --region WxH+X+Y   gui: start with this area selected
+      --region WxH+X+Y   gui, ask: start with this area selected
+      --question TEXT    ask: ask this as soon as an area is selected
       --stop-recording   Stop the screen recording in progress
   -h, --help             Show this help
 </source>
@@ -595,6 +772,7 @@ Comandos:
   window       Clique numa janela para capturá-la (--active: a janela em foco)
   scroll       Seleciona uma área e a captura enquanto ela rola
   record       Grava a tela
+  ask          Seleciona uma área e pergunta à IA sobre ela (neste computador)
   launcher     Abre a janela Captura de tela
   history      Mostra as capturas recentes
   config       Abre as configurações
@@ -607,7 +785,8 @@ Opções:
       --pin              Fixa a captura na tela
   -a, --active           window: captura a janela em foco
   -n, --number N         screen: captura a tela N
-      --region LxA+X+Y   gui: começa com esta área selecionada
+      --region LxA+X+Y   gui, ask: começa com esta área selecionada
+      --question TEXTO   ask: pergunta isto assim que a área for selecionada
       --stop-recording   Para a gravação de tela em andamento
   -h, --help             Mostra esta ajuda
 </translation>
@@ -626,7 +805,7 @@ Opções:
         <translation>Captura de tela</translation>
     </message>
     <message>
-        <location line="+175"/>
+        <location line="+180"/>
         <source>Window</source>
         <translation>Janela</translation>
     </message>
@@ -992,7 +1171,7 @@ Opções:
         <translation>Não foi possível iniciar o pkexec. Verifique se o polkit está instalado.</translation>
     </message>
     <message>
-        <location line="+32"/>
+        <location line="+35"/>
         <source>Text recognition is already running.</source>
         <translation>O reconhecimento de texto já está em andamento.</translation>
     </message>
@@ -1058,19 +1237,172 @@ Opções:
     </message>
 </context>
 <context>
+    <name>QObject</name>
+    <message>
+        <location filename="../src/screenshotintents.cpp" line="+46"/>
+        <source>There is no screen %1.</source>
+        <translation>Não existe a tela %1.</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Invalid region, use WIDTHxHEIGHT+X+Y.</source>
+        <translation>Área inválida, use LARGURAxALTURA+X+Y.</translation>
+    </message>
+    <message>
+        <location line="+18"/>
+        <source>No active window was found.</source>
+        <translation>Nenhuma janela ativa foi encontrada.</translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <source>Unable to capture the screen.</source>
+        <translation>Não foi possível capturar a tela.</translation>
+    </message>
+    <message>
+        <location line="+19"/>
+        <source>Another screen recording is already in progress.</source>
+        <translation>Já há outra gravação de tela em andamento.</translation>
+    </message>
+    <message>
+        <location line="+18"/>
+        <source>The screen recording did not start.</source>
+        <translation>A gravação da tela não começou.</translation>
+    </message>
+    <message>
+        <location line="+11"/>
+        <source>No screen recording is in progress.</source>
+        <translation>Nenhuma gravação de tela em andamento.</translation>
+    </message>
+    <message>
+        <location line="+14"/>
+        <source>Text recognition needs Tesseract.</source>
+        <translation>O reconhecimento de texto precisa do Tesseract.</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Text recognition is busy, try again.</source>
+        <translation>O reconhecimento de texto está ocupado, tente de novo.</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>This file is not an image.</source>
+        <translation>Este arquivo não é uma imagem.</translation>
+    </message>
+</context>
+<context>
     <name>RecordingIndicator</name>
     <message>
-        <location filename="../qml/RecordingIndicator.qml" line="+111"/>
+        <location filename="../qml/RecordingIndicator.qml" line="+63"/>
+        <location line="+80"/>
         <source>Stop</source>
         <translation>Parar</translation>
     </message>
     <message>
+        <location line="-84"/>
         <source>Recording the screen</source>
         <translation>Gravando a tela</translation>
     </message>
     <message>
+        <location line="+1"/>
         <source>Stop to save the video</source>
         <translation>Pare para salvar o vídeo</translation>
+    </message>
+</context>
+<context>
+    <name>ScreenAsk</name>
+    <message>
+        <location filename="../src/screenask.cpp" line="+180"/>
+        <source>Explain</source>
+        <translation>Explicar</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Translate to %1</source>
+        <translation>Traduzir para %1</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Summarize</source>
+        <translation>Resumir</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Copy text</source>
+        <translation>Copiar texto</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>What is this?</source>
+        <translation>O que é isso?</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Search the web</source>
+        <translation>Buscar na web</translation>
+    </message>
+    <message>
+        <location line="+23"/>
+        <source>Install Lingmo Assistant to ask the AI about the screen.</source>
+        <translation>Instale o Assistente Lingmo para perguntar à IA sobre a tela.</translation>
+    </message>
+    <message>
+        <location line="+89"/>
+        <source>The assistant wants to do something that needs your permission. Continue in the Assistant to answer.</source>
+        <translation>O Assistente quer fazer algo que precisa da sua permissão. Continue no Assistente para responder.</translation>
+    </message>
+    <message>
+        <location line="+12"/>
+        <location line="+20"/>
+        <source>Text copied.</source>
+        <translation>Texto copiado.</translation>
+    </message>
+    <message>
+        <location line="+19"/>
+        <source>No text was found in the selection.</source>
+        <translation>Nenhum texto foi encontrado na seleção.</translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <source>Answer copied.</source>
+        <translation>Resposta copiada.</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>Still reading the text, try again in a moment.</source>
+        <translation>Ainda lendo o texto, tente de novo em instantes.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>No text was found in the selection to search for.</source>
+        <translation>Nenhum texto foi encontrado na seleção para buscar.</translation>
+    </message>
+</context>
+<context>
+    <name>ScreenAskCore</name>
+    <message>
+        <location filename="../src/screenaskcore.cpp" line="+107"/>
+        <source>Explain what is in this area of the screen.</source>
+        <translation>Explique o que há nesta área da tela.</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Translate all the text in this area into %1.</source>
+        <translation>Traduza todo o texto desta área para %1.</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Summarize what this area shows.</source>
+        <translation>Resuma o que esta área mostra.</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>What is this?</source>
+        <translation>O que é isso?</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Write out exactly all the text in this area, keeping its lines, and nothing else.</source>
+        <translation>Transcreva exatamente todo o texto desta área, mantendo as linhas, e nada mais.</translation>
     </message>
 </context>
 <context>
@@ -1513,7 +1845,7 @@ Opções:
 <context>
     <name>main</name>
     <message>
-        <location filename="../src/main.cpp" line="+88"/>
+        <location filename="../src/main.cpp" line="+105"/>
         <source>No screen recording is in progress.</source>
         <translation>Nenhuma gravação de tela em andamento.</translation>
     </message>

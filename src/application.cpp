@@ -16,6 +16,9 @@
  */
 
 #include "application.h"
+#ifdef HAVE_LINGMO_INTENTS
+#include "screenshotintents.h"
+#endif
 #include "annotationcanvas.h"
 #include "capturecontroller.h"
 #include "capturesession.h"
@@ -167,6 +170,8 @@ Application::~Application()
 {
     for (const QPointer<PinWindow> &pin : std::as_const(m_pins))
         delete pin.data();
+    for (const QPointer<QWindow> &card : std::as_const(m_cards))
+        delete card.data();
     for (const QPointer<CaptureController> &c : std::as_const(m_controllers))
         delete c.data();
     delete m_launcher.data();
@@ -202,8 +207,15 @@ bool Application::registerService()
     if (!bus.registerService(QStringLiteral(SCREENSHOT_SERVICE)))
         return false;
     bus.registerObject(QStringLiteral(SCREENSHOT_PATH), this, QDBusConnection::ExportScriptableSlots);
+#ifdef HAVE_LINGMO_INTENTS
+    publishScreenshotIntents(this, m_intentsOnly);
+#endif
     return true;
 }
+
+QImage Application::grabAllScreens(QRect *bounds) { return grabAll(bounds); }
+QImage Application::grabOneScreen(QScreen *screen) { return grabScreen(screen); }
+QRect Application::nativeGeometryOf(const QScreen *screen) { return nativeGeometry(screen); }
 
 void Application::Run(const QStringList &args)
 {
@@ -263,6 +275,7 @@ bool Application::handle(const CommandLine::Request &request)
     case CommandLine::Window:
     case CommandLine::Record:
     case CommandLine::Scroll:
+    case CommandLine::Ask:
         if (request.command == CommandLine::Window && request.active)
             return captureNow(request);
         startInteractive(request);
@@ -317,6 +330,8 @@ void Application::startInteractive(const CommandLine::Request &request)
             session->setTarget(QStringLiteral("screen"));
         session->setVideo(request.command == CommandLine::Record);
         session->setScroll(request.command == CommandLine::Scroll);
+        session->setAsk(request.command == CommandLine::Ask);
+        session->setAskQuestion(request.question);
 
         if (!request.region.isNull()) {
             // Logical (relative to the screen) to image pixels.
@@ -517,6 +532,56 @@ void Application::startRecording(QScreen *screen, const QRect &nativeRect, int d
     options.frameRate = m_config->recordFrameRate();
     m_recorder->start(screen, nativeRect, options);
     checkQuit();
+}
+
+void Application::startAsk(const QString &question, int delayMs)
+{
+    CommandLine::Request request;
+    request.command = CommandLine::Ask;
+    request.question = question.trimmed().left(2000);
+    request.delayMs = delayMs;
+    startInteractive(request);
+}
+
+void Application::pinAnswer(const QString &question, const QString &answer, const QString &model)
+{
+    QScreen *screen = screenUnderPointer();
+    QObject *object = createQml(QStringLiteral("qrc:/qml/AnswerCard.qml"),
+                                { { QStringLiteral("cardQuestion"), question },
+                                  { QStringLiteral("cardAnswer"), answer },
+                                  { QStringLiteral("cardModel"), model } },
+                                this);
+    auto *window = qobject_cast<QWindow *>(object);
+    if (!window) {
+        delete object;
+        checkQuit();
+        return;
+    }
+    window->setParent(nullptr);
+    window->setScreen(screen);
+    const QRect area = screen->availableGeometry();
+    window->setPosition(area.right() - window->width() - 24, area.top() + 24);
+    m_cards.append(window);
+    connect(window, &QWindow::visibleChanged, this, [this, window](bool visible) {
+        if (!visible) {
+            window->deleteLater();
+            QTimer::singleShot(0, this, &Application::checkQuit);
+        }
+    });
+    connect(window, &QObject::destroyed, this, &Application::checkQuit);
+    window->show();
+}
+
+bool Application::hasWindows() const
+{
+    auto alive = [](const auto &list) {
+        for (const auto &p : list) {
+            if (p)
+                return true;
+        }
+        return false;
+    };
+    return alive(m_controllers) || alive(m_pins) || alive(m_cards) || m_pending > 0;
 }
 
 void Application::stopRecording()
@@ -821,10 +886,11 @@ void Application::checkQuit()
 
         m_controllers.removeAll(nullptr);
         m_pins.removeAll(nullptr);
+        m_cards.removeAll(nullptr);
 
         const bool launcherVisible = m_launcher && m_launcher->isVisible();
 
-        const bool busy = !m_controllers.isEmpty() || !m_pins.isEmpty() || launcherVisible
+        const bool busy = !m_controllers.isEmpty() || !m_pins.isEmpty() || !m_cards.isEmpty() || launcherVisible
                 || m_pending > 0 || m_uploads > 0 || m_recorder->busy() || m_notifier->pending()
                 || m_scroll->running() || m_ocr->installing() || m_ocr->busy()
                 || QGuiApplication::clipboard()->ownsClipboard();

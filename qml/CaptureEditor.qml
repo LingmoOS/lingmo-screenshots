@@ -18,6 +18,7 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import QtQuick.Shapes
 import LingmoUI.CompatibleModule 3.0 as LingmoUI
 import LingmoScreenshot 1.0
 
@@ -46,6 +47,11 @@ Item {
     property string target: capture.target
     property string tool: "select"
     property bool beautify: view.beautify
+    // "Ask about the screen": select (or circle) an area and ask the local AI
+    property bool askMode: capture.ask
+    // The circle or scribble being drawn (imageArea coordinates)
+    property var strokePoints: []
+    property bool askedInitial: false
 
     // What the left button is doing: "", "draw", "erase", "moveObject",
     // "moveSelection", "newSelection", "pickWindow", "resize".
@@ -68,11 +74,13 @@ Item {
     property bool eyedropper: false
     property bool textEditing: false
     property bool helpVisible: config.showHelp && !editorMode && !videoMode && !scrollMode && target === "area"
-                               && capture.initialRegion.width <= 0
+                               && capture.initialRegion.width <= 0 && !askMode
     property real wheelHintValue: -1
 
     readonly property bool interacting: mode === "newSelection" && dragStarted || mode === "resize" || mode === "moveSelection"
     readonly property bool barsVisible: hasSelection && !interacting && !textCard.visible
+    readonly property bool askPanelVisible: askMode && hasSelection && !interacting && mode !== "scribble"
+                                            && !textCard.visible
 
     readonly property var tools: [
         { name: "select", icon: "tool-pointer", tip: qsTr("Select and move objects (V)") },
@@ -237,6 +245,31 @@ Item {
         editor.forceActiveFocus()
     }
 
+    // ---------------------------------------------------------------- ask
+
+    function startAsk() {
+        commitText()
+        if (!hasSelection)
+            return
+        tool = "select"
+        eyedropper = false
+        annotations.selectedIndex = -1
+        askMode = true
+        askPrepare.restart()
+    }
+
+    // Esc in ask mode: stop listening, stop the answer, leave
+    function askEscape() {
+        if (screenAsk.listening)
+            screenAsk.cancelVoice()
+        else if (screenAsk.busy)
+            screenAsk.stop()
+        else if (editorMode && !capture.ask)
+            askMode = false
+        else
+            view.cancel()
+    }
+
     // ---------------------------------------------------------------- actions
 
     function act(name, argument) {
@@ -298,6 +331,16 @@ Item {
             setColor(capture.pixelColor(Math.floor(p.x), Math.floor(p.y)))
             eyedropper = false
             mode = ""
+            return
+        }
+
+        // Ask: drag a box, draw a circle or scribble over something; a
+        // click takes the smart selection under the pointer
+        if (askMode && !editorMode) {
+            mode = "scribble"
+            strokeFade.stop()
+            strokeShape.opacity = 1
+            strokePoints = [Qt.point(mouse.x, mouse.y)]
             return
         }
 
@@ -384,6 +427,24 @@ Item {
             selX = clamp(pressSelX + mouse.x - pressX, 0, imageArea.width - selW)
             selY = clamp(pressSelY + mouse.y - pressY, 0, imageArea.height - selH)
             break
+        case "scribble": {
+            if (!dragStarted && Math.abs(mouse.x - pressX) + Math.abs(mouse.y - pressY) > 3) {
+                dragStarted = true
+                hoverRegions = []
+            }
+            if (!dragStarted)
+                break
+            var points = strokePoints
+            var last = points[points.length - 1]
+            if (Math.abs(mouse.x - last.x) + Math.abs(mouse.y - last.y) >= 2) {
+                points.push(Qt.point(mouse.x, mouse.y))
+                strokePoints = points
+            }
+            var live = screenAsk.strokeBounds(strokePoints, 0, Qt.rect(0, 0, imageArea.width, imageArea.height))
+            if (live.width > 0)
+                setSelection(live.x, live.y, live.width, live.height)
+            break
+        }
         case "newSelection":
             if (!dragStarted && Math.abs(mouse.x - pressX) + Math.abs(mouse.y - pressY) > 3) {
                 dragStarted = true
@@ -412,6 +473,20 @@ Item {
                 selectImageRect(hoverRect)
             hoverRegions = []
             break
+        case "scribble": {
+            if (dragStarted) {
+                // The box around the stroke, a little larger than the line
+                var b = screenAsk.strokeBounds(strokePoints, 6, Qt.rect(0, 0, imageArea.width, imageArea.height))
+                if (b.width > 0)
+                    setSelection(b.x, b.y, b.width, b.height)
+            } else if (hoverRect) {
+                strokePoints = []
+                selectImageRect(hoverRect)
+            }
+            hoverRegions = []
+            strokeFade.restart()
+            break
+        }
         case "pickWindow": {
             var r = capture.windowAt(Math.round(mouse.x * s), Math.round(mouse.y * s))
             if (r.length > 0)
@@ -425,6 +500,8 @@ Item {
     }
 
     function doubleClick(mouse) {
+        if (askMode)
+            return
         if (tool !== "select" || !insideSelection(mouse.x, mouse.y) && !editorMode)
             return
         var index = annotations.itemAt(imagePoint(mouse.x, mouse.y), 4 * s)
@@ -446,7 +523,7 @@ Item {
             hoverLevel = clamp(hoverLevel + (up ? 1 : -1), 0, hoverRegions.length - 1)
             return
         }
-        if (hasSelection && !videoMode && !scrollMode)
+        if (hasSelection && !videoMode && !scrollMode && !askMode)
             changeWidth(up ? 1 : -1)
     }
 
@@ -479,6 +556,10 @@ Item {
 
         switch (event.key) {
         case Qt.Key_Escape:
+            if (askMode && !colorPopup.opened && !textCard.visible && !ocrMissing.visible) {
+                askEscape()
+                return
+            }
             if (colorPopup.opened) colorPopup.close()
             else if (eyedropper) eyedropper = false
             else if (textCard.visible) textCard.visible = false
@@ -488,6 +569,11 @@ Item {
             return
         case Qt.Key_Return:
         case Qt.Key_Enter:
+            if (askMode) {
+                if (askPanelVisible)
+                    askPanel.focusField()
+                return
+            }
             if (videoMode) act("record")
             else if (scrollMode) act("scroll")
             else act("accept")
@@ -510,8 +596,12 @@ Item {
             switch (event.key) {
             case Qt.Key_C: act("copy"); return
             case Qt.Key_S: act(shift ? "saveAs" : "save"); return
-            case Qt.Key_P: act("pin"); return
+            case Qt.Key_P:
+                // Ask: pin the answer, not the picture
+                if (askMode) { if (screenAsk.state === "done") screenAsk.pin(); return }
+                act("pin"); return
             case Qt.Key_T: act("ocr"); return
+            case Qt.Key_I: startAsk(); return
             case Qt.Key_H: if (shift) act("redact"); return
             case Qt.Key_Z: if (shift) annotations.redo(); else annotations.undo(); return
             case Qt.Key_Y: annotations.redo(); return
@@ -522,7 +612,7 @@ Item {
         }
 
         if (event.modifiers === Qt.NoModifier && toolKeys[event.key] !== undefined && hasSelection
-                && !videoMode && !scrollMode) {
+                && !videoMode && !scrollMode && !askMode) {
             setTool(toolKeys[event.key])
             return
         }
@@ -642,6 +732,8 @@ Item {
             cursorShape: {
                 if (eyedropper)
                     return Qt.CrossCursor
+                if (askMode && !editorMode)
+                    return Qt.CrossCursor
                 if (mode === "moveSelection" || mode === "moveObject")
                     return Qt.ClosedHandCursor
                 if (insideSelection(pointerX, pointerY) || editorMode) {
@@ -670,6 +762,38 @@ Item {
         SelectionFrame {
             editor: editor
             visible: hasSelection && !editorMode
+        }
+
+        // The circle or scribble around what to ask about; fades once drawn
+        Shape {
+            id: strokeShape
+            anchors.fill: parent
+            visible: askMode && strokePoints.length > 1 && opacity > 0
+
+            ShapePath {
+                strokeColor: Qt.rgba(1, 1, 1, 0.9)
+                strokeWidth: 9
+                fillColor: "transparent"
+                capStyle: ShapePath.RoundCap
+                joinStyle: ShapePath.RoundJoin
+                PathPolyline { path: editor.strokePoints }
+            }
+            ShapePath {
+                strokeColor: LingmoUI.Theme.highlightColor
+                strokeWidth: 5
+                fillColor: "transparent"
+                capStyle: ShapePath.RoundCap
+                joinStyle: ShapePath.RoundJoin
+                PathPolyline { path: editor.strokePoints }
+            }
+
+            NumberAnimation on opacity {
+                id: strokeFade
+                running: false
+                from: 1; to: 0
+                duration: 700
+                easing.type: Easing.InQuad
+            }
         }
 
         // Text being typed.
@@ -783,7 +907,7 @@ Item {
     ModeBar {
         id: modeBar
         editor: editor
-        visible: !editorMode && !interacting && mode !== "draw"
+        visible: !editorMode && !interacting && mode !== "draw" && !askMode
         z: 10
         anchors.horizontalCenter: parent.horizontalCenter
         y: {
@@ -803,7 +927,7 @@ Item {
         readonly property real gap: LingmoUI.Units.smallSpacing + 2
 
         z: 10
-        visible: barsVisible && !editorMode
+        visible: barsVisible && !editorMode && !askMode
         spacing: LingmoUI.Units.smallSpacing
         width: Math.min(naturalWidth, editor.width - margin * 2)
         layoutDirection: Qt.LeftToRight
@@ -845,6 +969,110 @@ Item {
             ActionsCard { id: dockActions; editor: editor; visible: editorMode }
         }
     }
+
+    // Ask: what to do, before anything is selected
+    Rectangle {
+        id: askHint
+        z: 10
+        visible: askMode && !editorMode && !hasSelection && mode === ""
+        anchors.horizontalCenter: parent.horizontalCenter
+        y: LingmoUI.Units.largeSpacing * 2
+        width: askHintRow.implicitWidth + LingmoUI.Units.largeSpacing * 2
+        height: askHintRow.implicitHeight + LingmoUI.Units.largeSpacing
+        radius: height / 2
+        color: LingmoUI.Theme.secondBackgroundColor
+        border.width: 1
+        border.color: LingmoUI.Theme.borderColor
+
+        RowLayout {
+            id: askHintRow
+            anchors.centerIn: parent
+            spacing: LingmoUI.Units.smallSpacing
+
+            LingmoUI.IconItem {
+                Layout.preferredWidth: 18
+                Layout.preferredHeight: 18
+                source: "lingmo-assistant"
+            }
+            Label {
+                text: qsTr("Circle, scribble over or select what you want to ask about")
+                color: LingmoUI.Theme.textColor
+                font.bold: true
+            }
+            Label {
+                text: qsTr("Esc to close")
+                color: LingmoUI.Theme.secondaryTextColor
+                font.pointSize: LingmoUI.Units.fontCaption
+            }
+        }
+    }
+
+    AskPanel {
+        id: askPanel
+        z: 15
+        visible: askPanelVisible
+        backdrop: editorMode ? null : imageArea
+        maxHeight: Math.min(620, editor.height - LingmoUI.Units.largeSpacing * 4)
+        width: Math.min(implicitWidth, editor.width - LingmoUI.Units.largeSpacing * 4)
+        height: implicitHeight
+
+        readonly property real margin: LingmoUI.Units.largeSpacing * 2
+        readonly property real gap: LingmoUI.Units.largeSpacing
+
+        // Beside the selection (right, then left), else below or above it,
+        // else over its bottom-right corner
+        x: {
+            var right = imageArea.x + selX + selW + gap
+            if (right + width <= editor.width - margin)
+                return right
+            var left = imageArea.x + selX - gap - width
+            if (left >= margin)
+                return left
+            return clamp(imageArea.x + selX + selW - width, margin, editor.width - width - margin)
+        }
+        y: {
+            var right = imageArea.x + selX + selW + gap
+            var left = imageArea.x + selX - gap - width
+            if (right + width <= editor.width - margin || left >= margin)
+                return clamp(imageArea.y + selY, margin, editor.height - height - margin)
+            var below = imageArea.y + selY + selH + gap
+            if (below + height <= editor.height - margin)
+                return below
+            var above = imageArea.y + selY - gap - height
+            if (above >= margin)
+                return above
+            return clamp(editor.height - height - margin, margin, editor.height - height - margin)
+        }
+
+        onCloseRequested: editor.askEscape()
+        onVisibleChanged: if (visible) focusTimer.restart()
+
+        Timer {
+            id: focusTimer
+            interval: 50
+            onTriggered: askPanel.focusField()
+        }
+    }
+
+    // The area changed: crop it and read its text before the question
+    Timer {
+        id: askPrepare
+        interval: 120
+        onTriggered: {
+            if (!askMode || !hasSelection || interacting || mode === "scribble")
+                return
+            screenAsk.prepare(selectionImageRect())
+            if (capture.askQuestion.length > 0 && !askedInitial) {
+                askedInitial = true
+                screenAsk.ask(capture.askQuestion)
+            }
+        }
+    }
+    onSelXChanged: if (askMode) askPrepare.restart()
+    onSelYChanged: if (askMode) askPrepare.restart()
+    onSelWChanged: if (askMode) askPrepare.restart()
+    onSelHChanged: if (askMode) askPrepare.restart()
+    onModeChanged: if (askMode && mode === "") askPrepare.restart()
 
     ColorPopup {
         id: colorPopup

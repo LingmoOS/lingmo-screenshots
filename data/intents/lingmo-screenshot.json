@@ -1,0 +1,382 @@
+{
+  "format": "lingmo-intents",
+  "version": 1,
+  "app": "lingmo-screenshot",
+  "name": {
+    "en": "Screenshots",
+    "pt_BR": "Capturas de tela"
+  },
+  "icon": "lingmo-screenshot",
+  "desktop": "lingmo-screenshot.desktop",
+  "dbus": {
+    "service": "com.lingmo.Screenshot",
+    "path": "/Intents"
+  },
+  "intents": [
+    {
+      "id": "screenshot.capture",
+      "title": {
+        "en": "Take a screenshot",
+        "pt_BR": "Capturar a tela"
+      },
+      "description": {
+        "en": "Saves a picture of the screen, all screens, the active window or an area.",
+        "pt_BR": "Salva uma imagem da tela, de todas as telas, da janela ativa ou de uma área."
+      },
+      "summary": {
+        "en": "Capture the {mode}",
+        "pt_BR": "Capturar: {mode}"
+      },
+      "icon": "camera-photo",
+      "capabilities": [
+        "create"
+      ],
+      "assistantTool": "desktop_actions",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "mode": {
+            "type": "string",
+            "enum": [
+              "screen",
+              "full",
+              "window",
+              "area"
+            ],
+            "default": "screen",
+            "title": {
+              "en": "What",
+              "pt_BR": "O quê"
+            }
+          },
+          "screen": {
+            "type": "integer",
+            "minimum": -1,
+            "maximum": 16,
+            "default": -1,
+            "title": {
+              "en": "Screen (-1 = main)",
+              "pt_BR": "Tela (-1 = principal)"
+            }
+          },
+          "region": {
+            "type": "string",
+            "default": "",
+            "maxLength": 40,
+            "title": {
+              "en": "Area (X,Y,W,H or WxH+X+Y)",
+              "pt_BR": "Área (X,Y,L,A ou LxA+X+Y)"
+            }
+          },
+          "path": {
+            "type": "string",
+            "format": "file",
+            "title": {
+              "en": "Save as (file or folder)",
+              "pt_BR": "Salvar como (arquivo ou pasta)"
+            },
+            "description": {
+              "en": "Empty: the folder set in Screenshots",
+              "pt_BR": "Vazio: a pasta definida no Capturas de tela"
+            }
+          },
+          "delay": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 30,
+            "default": 0,
+            "title": {
+              "en": "Delay (s)",
+              "pt_BR": "Atraso (s)"
+            }
+          }
+        }
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "title": {
+              "en": "File",
+              "pt_BR": "Arquivo"
+            }
+          },
+          "width": {
+            "type": "integer",
+            "title": {
+              "en": "Width",
+              "pt_BR": "Largura"
+            }
+          },
+          "height": {
+            "type": "integer",
+            "title": {
+              "en": "Height",
+              "pt_BR": "Altura"
+            }
+          }
+        }
+      },
+      "examples": {
+        "pt_BR": [
+          "capturar a tela",
+          "tirar print",
+          "print da {mode}",
+          "capturar {mode}",
+          "screenshot"
+        ],
+        "en": [
+          "take a screenshot",
+          "capture the {mode}",
+          "screenshot"
+        ]
+      }
+    },
+    {
+      "id": "screen.record.start",
+      "title": {
+        "en": "Start screen recording",
+        "pt_BR": "Iniciar gravação da tela"
+      },
+      "description": {
+        "en": "Starts recording a screen or an area (stop it with “Stop screen recording”).",
+        "pt_BR": "Começa a gravar uma tela ou uma área (pare com “Parar gravação da tela”)."
+      },
+      "icon": "media-record",
+      "capabilities": [
+        "create"
+      ],
+      "assistantTool": "desktop_actions",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "screen": {
+            "type": "integer",
+            "minimum": -1,
+            "maximum": 16,
+            "default": -1,
+            "title": {
+              "en": "Screen (-1 = main)",
+              "pt_BR": "Tela (-1 = principal)"
+            }
+          },
+          "region": {
+            "type": "string",
+            "default": "",
+            "maxLength": 40,
+            "title": {
+              "en": "Area (X,Y,W,H or WxH+X+Y)",
+              "pt_BR": "Área (X,Y,L,A ou LxA+X+Y)"
+            }
+          }
+        }
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "recording": {
+            "type": "boolean",
+            "title": {
+              "en": "Recording",
+              "pt_BR": "Gravando"
+            }
+          },
+          "folder": {
+            "type": "string",
+            "title": {
+              "en": "Folder",
+              "pt_BR": "Pasta"
+            }
+          }
+        }
+      },
+      "examples": {
+        "pt_BR": [
+          "gravar a tela",
+          "iniciar gravação da tela",
+          "começar a gravar a tela"
+        ],
+        "en": [
+          "record the screen",
+          "start screen recording"
+        ]
+      }
+    },
+    {
+      "id": "screen.record.stop",
+      "title": {
+        "en": "Stop screen recording",
+        "pt_BR": "Parar gravação da tela"
+      },
+      "description": {
+        "en": "Stops the screen recording and saves the video.",
+        "pt_BR": "Para a gravação da tela e salva o vídeo."
+      },
+      "icon": "media-playback-stop",
+      "capabilities": [
+        "create"
+      ],
+      "assistantTool": "desktop_actions",
+      "parameters": {
+        "type": "object",
+        "properties": {}
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "title": {
+              "en": "Video",
+              "pt_BR": "Vídeo"
+            }
+          }
+        }
+      },
+      "examples": {
+        "pt_BR": [
+          "parar gravação",
+          "parar de gravar a tela"
+        ],
+        "en": [
+          "stop recording",
+          "stop screen recording"
+        ]
+      }
+    },
+    {
+      "id": "screenshot.ocr",
+      "title": {
+        "en": "Read text in an image",
+        "pt_BR": "Ler texto de uma imagem"
+      },
+      "description": {
+        "en": "Recognizes the text of an image on this computer (Tesseract, offline).",
+        "pt_BR": "Reconhece o texto de uma imagem neste computador (Tesseract, sem internet)."
+      },
+      "icon": "edit-select-text",
+      "capabilities": [
+        "read"
+      ],
+      "assistantTool": "read_files",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "format": "file",
+            "title": {
+              "en": "Image",
+              "pt_BR": "Imagem"
+            }
+          },
+          "languages": {
+            "type": "string",
+            "default": "",
+            "pattern": "[a-z_+]*",
+            "maxLength": 60,
+            "title": {
+              "en": "Languages (e.g. por+eng)",
+              "pt_BR": "Idiomas (ex.: por+eng)"
+            }
+          }
+        },
+        "required": [
+          "path"
+        ]
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": "string",
+            "title": {
+              "en": "Text",
+              "pt_BR": "Texto"
+            }
+          }
+        }
+      },
+      "examples": {
+        "pt_BR": [
+          "ler texto da imagem {path}",
+          "extrair texto de {path}",
+          "ocr {path}"
+        ],
+        "en": [
+          "read the text in {path}",
+          "ocr {path}"
+        ]
+      }
+    },
+    {
+      "id": "screen.ask",
+      "title": {
+        "en": "Ask about the screen",
+        "pt_BR": "Perguntar sobre a tela"
+      },
+      "description": {
+        "en": "Select (or circle) anything on the screen and ask the local AI about it: explain, translate, summarize, copy its text. Nothing leaves the computer.",
+        "pt_BR": "Selecione (ou circule) qualquer coisa na tela e pergunte à IA local: explicar, traduzir, resumir, copiar o texto. Nada sai do computador."
+      },
+      "summary": {
+        "en": "Ask about the screen",
+        "pt_BR": "Perguntar sobre a tela"
+      },
+      "icon": "lingmo-assistant",
+      "capabilities": [
+        "read"
+      ],
+      "needsUI": true,
+      "assistantTool": "desktop_actions",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "question": {
+            "type": "string",
+            "default": "",
+            "maxLength": 2000,
+            "x-multiline": true,
+            "title": {
+              "en": "Question (optional)",
+              "pt_BR": "Pergunta (opcional)"
+            },
+            "description": {
+              "en": "Asked as soon as the area is selected",
+              "pt_BR": "Feita assim que a área for selecionada"
+            }
+          }
+        }
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "opened": {
+            "type": "boolean",
+            "title": {
+              "en": "Opened",
+              "pt_BR": "Aberto"
+            }
+          }
+        }
+      },
+      "examples": {
+        "pt_BR": [
+          "perguntar sobre a tela",
+          "o que é isso na tela",
+          "explicar a tela",
+          "traduzir a tela",
+          "circular para pesquisar",
+          "perguntar à ia sobre a tela"
+        ],
+        "en": [
+          "ask about the screen",
+          "what is on my screen",
+          "circle to search",
+          "translate the screen"
+        ]
+      }
+    }
+  ]
+}

@@ -77,6 +77,8 @@ public slots:
 
     void stop();
     bool isRecording() const;
+    // The file being recorded (the last one after stop())
+    QString fileName() const { return m_fileName; }
     // Recording, converting, or waiting for the notification actions.
     bool busy() const;
 

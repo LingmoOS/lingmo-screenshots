@@ -11,6 +11,8 @@
 #include <QPainter>
 #include <QTemporaryDir>
 #include <QSignalSpy>
+#include <QUrlQuery>
+#include <cmath>
 
 #include "annotationmodel.h"
 #include "annotationrenderer.h"
@@ -20,6 +22,7 @@
 #include "ocr.h"
 #include "desktopapps.h"
 #include "commandline.h"
+#include "screenaskcore.h"
 
 class TestCore : public QObject
 {
@@ -70,6 +73,12 @@ private slots:
     void commandLine();
     void commandLineErrors();
     void commandLineRoundTrip();
+
+    // Ask about the screen
+    void askCommandLine();
+    void askStrokeBounds();
+    void askEncodeImage();
+    void askChipsAndSearch();
 };
 
 void TestCore::drawAndUndoRedo()
@@ -696,6 +705,89 @@ void TestCore::commandLineRoundTrip()
     QCOMPARE(back.path, QString("/a b/"));
     QCOMPARE(back.region, QRect(5, 6, 7, 8));
     QVERIFY(back.pin);
+}
+
+void TestCore::askCommandLine()
+{
+    CommandLine::Request r;
+    QString error;
+    QVERIFY(CommandLine::parse({QStringLiteral("ask"), QStringLiteral("--question"), QStringLiteral("  O que é isso?  ")},
+                               &r, &error));
+    QCOMPARE(r.command, CommandLine::Ask);
+    QCOMPARE(r.question, QStringLiteral("O que é isso?"));
+    QVERIFY(r.interactive());   // handed to the running instance
+    CommandLine::Request back;
+    QVERIFY(CommandLine::parse(r.toArguments(), &back, &error));
+    QCOMPARE(back.command, CommandLine::Ask);
+    QCOMPARE(back.question, r.question);
+    QVERIFY(!CommandLine::parse({QStringLiteral("ask"), QStringLiteral("--question")}, &r, &error));
+    QVERIFY(!CommandLine::parse({QStringLiteral("ask"), QStringLiteral("--raw")}, &r, &error));
+}
+
+void TestCore::askStrokeBounds()
+{
+    const QRectF bounds(0, 0, 1000, 800);
+    // A diagonal drag is its rectangle
+    QCOMPARE(ScreenAskCore::strokeBounds({QPointF(100, 100), QPointF(300, 200)}, 0, bounds), QRectF(100, 100, 200, 100));
+    // A rough circle around something: its box, grown by the padding
+    QVector<QPointF> circle;
+    for (int i = 0; i < 36; ++i) {
+        const qreal a = i * M_PI / 18;
+        circle << QPointF(500 + 80 * std::cos(a), 400 + 50 * std::sin(a));
+    }
+    const QRectF c = ScreenAskCore::strokeBounds(circle, 6, bounds);
+    QVERIFY(qAbs(c.left() - 414) < 1 && qAbs(c.right() - 586) < 1);
+    QVERIFY(qAbs(c.top() - 344) < 1 && qAbs(c.bottom() - 456) < 1);
+    // Kept inside the screen
+    QCOMPARE(ScreenAskCore::strokeBounds({QPointF(2, 3), QPointF(50, 60)}, 10, bounds).topLeft(), QPointF(0, 0));
+    // A line or a click is no area
+    QVERIFY(ScreenAskCore::strokeBounds({QPointF(10, 10), QPointF(300, 12)}, 6, bounds).isNull());
+    QVERIFY(ScreenAskCore::strokeBounds({QPointF(10, 10)}, 6, bounds).isNull());
+}
+
+void TestCore::askEncodeImage()
+{
+    QImage big(3000, 1500, QImage::Format_ARGB32);
+    big.fill(Qt::transparent);
+    QPainter p(&big);
+    p.fillRect(100, 100, 400, 300, Qt::red);
+    p.end();
+    QByteArray format;
+    const QByteArray data = ScreenAskCore::encodeImage(big, 1280, 3 * 1024 * 1024, &format);
+    QCOMPARE(format, QByteArray("png"));
+    const QImage back = QImage::fromData(data);
+    QCOMPARE(back.size(), QSize(1280, 640));
+    QVERIFY(!back.hasAlphaChannel());
+    QCOMPARE(QColor(back.pixel(5, 5)), QColor(Qt::white));   // transparency on white
+
+    // Noise doesn't compress as PNG: JPEG under the limit
+    QImage noise(1000, 1000, QImage::Format_RGB32);
+    quint32 seed = 1;
+    for (int y = 0; y < noise.height(); ++y)
+        for (int x = 0; x < noise.width(); ++x)
+            noise.setPixel(x, y, (seed = seed * 1664525u + 1013904223u) | 0xff000000u);
+    const QByteArray small = ScreenAskCore::encodeImage(noise, 1280, 400 * 1024, &format);
+    QCOMPARE(format, QByteArray("jpeg"));
+    QVERIFY(small.size() > 0);
+    QVERIFY(ScreenAskCore::encodeImage(QImage()).isEmpty());
+}
+
+void TestCore::askChipsAndSearch()
+{
+    const QLocale br(QLocale::Portuguese, QLocale::Brazil);
+    QCOMPARE(ScreenAskCore::languageName(br), QStringLiteral("português (Brasil)"));
+    QVERIFY(ScreenAskCore::chipQuestion(QStringLiteral("translate"), br).contains(QStringLiteral("português (Brasil)")));
+    for (const char *kind : {"explain", "summarize", "what", "copy"})
+        QVERIFY(!ScreenAskCore::chipQuestion(QString::fromLatin1(kind)).isEmpty());
+    QVERIFY(ScreenAskCore::chipQuestion(QStringLiteral("nope")).isEmpty());
+
+    QVERIFY(ScreenAskCore::webSearchUrl(QStringLiteral("  \n ")).isEmpty());
+    const QUrl url = ScreenAskCore::webSearchUrl(QStringLiteral("Quarterly\nreport  2026 & more"));
+    QCOMPARE(url.host(), QStringLiteral("duckduckgo.com"));
+    QCOMPARE(QUrlQuery(url).queryItemValue(QStringLiteral("q"), QUrl::FullyDecoded),
+             QStringLiteral("Quarterly report 2026 & more"));
+    const QString longText = QStringLiteral("word ").repeated(100);
+    QVERIFY(QUrlQuery(ScreenAskCore::webSearchUrl(longText)).queryItemValue(QStringLiteral("q"), QUrl::FullyDecoded).size() <= 200);
 }
 
 QTEST_MAIN(TestCore)

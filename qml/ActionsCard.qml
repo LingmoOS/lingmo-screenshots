@@ -52,6 +52,12 @@ LingmoUI.Card {
 
             LingmoUI.IconButton {
                 size: 32; iconSize: 18
+                iconName: "lingmo-assistant"
+                tipText: qsTr("Ask AI about this (Ctrl+I)")
+                onClicked: editor.startAsk()
+            }
+            LingmoUI.IconButton {
+                size: 32; iconSize: 18
                 iconName: "lingmo-ocr"
                 tipText: qsTr("Copy text (Ctrl+T)")
                 onClicked: editor.act("ocr")

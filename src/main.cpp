@@ -60,6 +60,23 @@ QStringList arguments(int argc, char *argv[])
 int main(int argc, char *argv[])
 {
     const QStringList args = arguments(argc, argv);
+#ifdef HAVE_LINGMO_INTENTS
+    // D-Bus activation for the Lingmo Intents (screenshot.capture, screen.record.*,
+    // screenshot.ocr): an instance without windows that leaves when idle
+    if (args == QStringList{QStringLiteral("--intents")}) {
+        QApplication app(argc, argv);
+        app.setOrganizationName(QStringLiteral("lingmoos"));
+        app.setApplicationName(QStringLiteral("lingmo-screenshot"));
+        app.setDesktopFileName(QStringLiteral("lingmo-screenshot"));
+        app.setQuitOnLastWindowClosed(false);
+        loadTranslation(&app);
+        Application application;
+        application.setIntentsOnly(true);
+        if (!application.registerService())
+            return 0;
+        return app.exec();
+    }
+#endif
     CommandLine::Request request;
     QString error;
     const bool parsed = CommandLine::parse(args, &request, &error);

@@ -27,6 +27,7 @@
 
 class CaptureSession;
 class ItemWindow;
+class ScreenAsk;
 class QScreen;
 class QWindow;
 
@@ -103,6 +104,7 @@ private:
     bool m_beautify;
     bool m_closing;
     QString m_busyText;
+    ScreenAsk *m_ask;
     QPointer<ItemWindow> m_view;
     QPointer<QWindow> m_editorWindow;
 };

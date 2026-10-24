@@ -33,6 +33,7 @@ namespace CommandLine
         Window,         // pick a window (or the active one with --active)
         Scroll,         // long capture of a scrolled area
         Record,         // interactive screen recording
+        Ask,            // select an area and ask the AI about it
         Launcher,       // the app window
         History,
         Settings,
@@ -51,6 +52,7 @@ namespace CommandLine
         bool active = false;    // window: the focused window, no picking
         int screen = -1;        // screen: index, -1 = under the pointer
         QRect region;           // gui: preselected area, logical pixels of the screen
+        QString question;       // ask: asked as soon as an area is selected
 
         // Commands that open a window are handed to the running instance.
         bool interactive() const;

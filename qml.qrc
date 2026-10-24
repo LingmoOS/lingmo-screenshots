@@ -11,6 +11,8 @@
         <file>qml/ColorPopup.qml</file>
         <file>qml/HelpCard.qml</file>
         <file>qml/TextResultCard.qml</file>
+        <file>qml/AskPanel.qml</file>
+        <file>qml/AnswerCard.qml</file>
         <file>qml/PinWindow.qml</file>
         <file>qml/ScrollIndicator.qml</file>
         <file>qml/RecordingIndicator.qml</file>

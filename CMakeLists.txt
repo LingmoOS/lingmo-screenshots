@@ -30,6 +30,7 @@ add_library(screenshot-core STATIC
     src/filenamepattern.cpp
     src/imageanalysis.cpp
     src/ocr.cpp
+    src/screenaskcore.cpp
 )
 target_include_directories(screenshot-core PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src)
 target_link_libraries(screenshot-core PUBLIC Qt6::Core Qt6::Gui)
@@ -38,6 +39,7 @@ set(PROJECT_SOURCES
     src/main.cpp
     src/annotationcanvas.cpp
     src/application.cpp
+    src/assistantengine.cpp
     src/capturecontroller.cpp
     src/capturesession.cpp
     src/config.cpp
@@ -45,6 +47,7 @@ set(PROJECT_SOURCES
     src/itemwindow.cpp
     src/notifier.cpp
     src/pinwindow.cpp
+    src/screenask.cpp
     src/screenrecorder.cpp
     src/scrollcapture.cpp
     src/x11windows.cpp
@@ -65,6 +68,18 @@ target_link_libraries(lingmo-screenshot
   Qt6::Quick
   PkgConfig::XCB
 )
+
+# Lingmo Intents: screenshot.capture, screen.record.start/stop, screenshot.ocr
+# on com.lingmo.Screenshot /Intents (D-Bus activation: lingmo-screenshot --intents)
+find_package(LingmoIntents 1.0 QUIET)
+if(LingmoIntents_FOUND)
+  target_sources(lingmo-screenshot PRIVATE src/screenshotintents.cpp src/screenshotintents.h)
+  target_compile_definitions(lingmo-screenshot PRIVATE HAVE_LINGMO_INTENTS)
+  target_link_libraries(lingmo-screenshot PRIVATE LingmoIntents::LingmoIntents)
+  lingmo_install_intents(MANIFEST data/intents/lingmo-screenshot.json SERVICE data/com.lingmo.Screenshot.service)
+else()
+  message(WARNING "LingmoIntents not found: screenshots are built without app actions (intents)")
+endif()
 
 file(GLOB TS_FILES translations/*.ts)
 foreach(filepath ${TS_FILES})

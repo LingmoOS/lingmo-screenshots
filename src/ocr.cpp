@@ -288,6 +288,9 @@ void OcrEngine::cancel()
     m_process->kill();
     m_process->deleteLater();
     m_process = nullptr;
+    // The copy of the capture goes away now, not at the next recognition
+    delete m_tempDir;
+    m_tempDir = nullptr;
     emit busyChanged();
 }
 

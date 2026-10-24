@@ -24,6 +24,7 @@
 #include "desktopapps.h"
 #include "historymodel.h"
 #include "ocr.h"
+#include "screenask.h"
 
 #include <QDir>
 #include <QGuiApplication>
@@ -62,8 +63,11 @@ CaptureController::CaptureController(CaptureSession *session, QObject *parent)
     , m_overlay(false)
     , m_beautify(false)
     , m_closing(false)
+    , m_ask(new ScreenAsk(session, this))
 {
     m_session->setParent(this);
+    connect(m_ask, &ScreenAsk::closeRequested, this, &CaptureController::close);
+    connect(m_ask, &ScreenAsk::message, this, &CaptureController::message);
 }
 
 CaptureController::~CaptureController()
@@ -93,7 +97,8 @@ void CaptureController::showOverlay(QScreen *screen)
     QObject *object = Application::instance()->createQml(
             QStringLiteral("qrc:/qml/Overlay.qml"),
             { { QStringLiteral("view"), QVariant::fromValue<QObject *>(this) },
-              { QStringLiteral("capture"), QVariant::fromValue<QObject *>(m_session) } },
+              { QStringLiteral("capture"), QVariant::fromValue<QObject *>(m_session) },
+              { QStringLiteral("screenAsk"), QVariant::fromValue<QObject *>(m_ask) } },
             this);
     auto *item = qobject_cast<QQuickItem *>(object);
     if (!item) {
@@ -117,6 +122,7 @@ void CaptureController::showEditor(const QString &title)
             QStringLiteral("qrc:/qml/EditorWindow.qml"),
             { { QStringLiteral("view"), QVariant::fromValue<QObject *>(this) },
               { QStringLiteral("capture"), QVariant::fromValue<QObject *>(m_session) },
+              { QStringLiteral("screenAsk"), QVariant::fromValue<QObject *>(m_ask) },
               { QStringLiteral("editorTitle"), title } },
             this);
     m_editorWindow = qobject_cast<QWindow *>(object);

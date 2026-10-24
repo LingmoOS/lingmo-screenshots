@@ -66,6 +66,13 @@ public:
     // is none.
     static bool forward(const QStringList &args);
     bool registerService();
+    // `lingmo-screenshot --intents`: started by D-Bus activation only to serve
+    // the Lingmo Intents; leaves when idle
+    void setIntentsOnly(bool on) { m_intentsOnly = on; }
+    // Screen grabs, shared with the Lingmo Intents (screenshotintents.cpp)
+    static QImage grabAllScreens(QRect *bounds);
+    static QImage grabOneScreen(QScreen *screen);
+    static QRect nativeGeometryOf(const QScreen *screen);
 
     // Runs a request. Returns false when the process should exit at once
     // with an error (already reported on stderr).
@@ -91,6 +98,12 @@ public:
     // delayMs: time for the overlay to leave the screen first.
     void startScrollCapture(QScreen *screen, const QRect &nativeRect, int delayMs = 0);
     void startRecording(QScreen *screen, const QRect &nativeRect, int delayMs = 0);
+    // "Ask about the screen": the overlay for a question to the AI
+    void startAsk(const QString &question = QString(), int delayMs = 0);
+    // A floating card with an answer of the AI
+    void pinAnswer(const QString &question, const QString &answer, const QString &model);
+    // Captures or answer cards on screen (the intents-only process stays for them)
+    bool hasWindows() const;
 
     // Outputs. saveImage: path may be a file or a folder (then the pattern
     // names the file). Returns the saved file, empty on error.
@@ -140,11 +153,13 @@ private:
 
     QList<QPointer<CaptureController>> m_controllers;
     QList<QPointer<PinWindow>> m_pins;
+    QList<QPointer<QWindow>> m_cards;
     QQmlEngine *m_engine;
     QPointer<QWindow> m_launcher;
     int m_pending;
     int m_uploads;
     bool m_quitScheduled;
+    bool m_intentsOnly = false;
 };
 
 #endif // APPLICATION_H

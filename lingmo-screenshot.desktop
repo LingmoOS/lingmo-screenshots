@@ -6,20 +6,26 @@ GenericName=Screenshot and screen recording
 GenericName[pt_BR]=Captura e gravação de tela
 Comment=Capture, annotate, pin and record the screen
 Comment[pt_BR]=Capture, anote, fixe e grave a tela
-Keywords=screenshot;capture;print;annotate;ocr;record;
-Keywords[pt_BR]=captura;tela;print;anotar;texto;ocr;gravar;
+Keywords=screenshot;capture;print;annotate;ocr;record;ask;ai;circle;search;translate;
+Keywords[pt_BR]=captura;tela;print;anotar;texto;ocr;gravar;perguntar;ia;circular;pesquisar;traduzir;
 Exec=lingmo-screenshot launcher
 Icon=lingmo-screenshot
 Terminal=false
 Type=Application
 StartupNotify=false
 Categories=Utility;
-Actions=Capture;FullScreen;Record;History;
+Actions=Capture;AskScreen;FullScreen;Record;History;
+X-Lingmo-Intents=screenshot.capture;screen.record.start;screen.record.stop;screenshot.ocr;screen.ask;
 
 [Desktop Action Capture]
 Name=New capture
 Name[pt_BR]=Nova captura
 Exec=lingmo-screenshot gui --delay 0.4
+
+[Desktop Action AskScreen]
+Name=Ask about the screen
+Name[pt_BR]=Perguntar sobre a tela
+Exec=lingmo-screenshot ask --delay 0.4
 
 [Desktop Action FullScreen]
 Name=Capture all screens

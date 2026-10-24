@@ -66,6 +66,8 @@ class CaptureSession : public QObject
     Q_PROPERTY(QString target READ target CONSTANT)
     Q_PROPERTY(bool video READ video CONSTANT)
     Q_PROPERTY(bool scroll READ scroll CONSTANT)
+    Q_PROPERTY(bool ask READ ask CONSTANT)
+    Q_PROPERTY(QString askQuestion READ askQuestion CONSTANT)
     Q_PROPERTY(QRect initialRegion READ initialRegion CONSTANT)
     Q_PROPERTY(QString acceptPath READ acceptPath CONSTANT)
 
@@ -105,6 +107,11 @@ public:
     void setVideo(bool video) { m_video = video; }
     bool scroll() const { return m_scroll; }
     void setScroll(bool scroll) { m_scroll = scroll; }
+    // "Ask about the screen": the overlay opens for a question to the AI
+    bool ask() const { return m_ask; }
+    void setAsk(bool ask) { m_ask = ask; }
+    QString askQuestion() const { return m_askQuestion; }
+    void setAskQuestion(const QString &question) { m_askQuestion = question; }
     QRect initialRegion() const { return m_initialRegion; }
     void setInitialRegion(const QRect &rect) { m_initialRegion = rect; }
 
@@ -143,6 +150,8 @@ private:
     QString m_target;
     bool m_video;
     bool m_scroll;
+    bool m_ask = false;
+    QString m_askQuestion;
     QRect m_initialRegion;
     QString m_acceptPath;
     bool m_acceptClipboard;

@@ -33,6 +33,7 @@ const CommandName COMMANDS[] = {
     { "window", CommandLine::Window },
     { "scroll", CommandLine::Scroll },
     { "record", CommandLine::Record },
+    { "ask", CommandLine::Ask },
     { "launcher", CommandLine::Launcher },
     { "history", CommandLine::History },
     { "config", CommandLine::Settings },
@@ -61,6 +62,7 @@ bool CommandLine::Request::interactive() const
     case Gui:
     case Scroll:
     case Record:
+    case Ask:
     case Launcher:
     case History:
     case Settings:
@@ -93,6 +95,8 @@ QStringList CommandLine::Request::toArguments() const
     if (!region.isNull())
         args << QStringLiteral("--region")
              << QStringLiteral("%1,%2,%3,%4").arg(region.x()).arg(region.y()).arg(region.width()).arg(region.height());
+    if (!question.isEmpty())
+        args << QStringLiteral("--question") << question;
     return args;
 }
 
@@ -200,6 +204,10 @@ bool CommandLine::parse(const QStringList &args, Request *request, QString *erro
                 r.screen = v.toInt(&ok);
             if (!ok || r.screen < 0)
                 return fail(tr("--number needs a screen number (0, 1…)."));
+        } else if (name == QLatin1String("--question")) {
+            if (!takeValue(&r.question) || r.question.trimmed().isEmpty())
+                return fail(tr("--question needs a text."));
+            r.question = r.question.trimmed().left(2000);
         } else if (name == QLatin1String("--region")) {
             QString v;
             if (!takeValue(&v) || (r.region = parseRegion(v)).isNull())
@@ -241,6 +249,7 @@ QString CommandLine::helpText()
         "  window       Click a window to capture it (--active: the focused window)\n"
         "  scroll       Select an area and capture it while it scrolls\n"
         "  record       Record the screen\n"
+        "  ask          Select an area and ask the AI about it (on this computer)\n"
         "  launcher     Open the Screenshot window\n"
         "  history      Show the recent captures\n"
         "  config       Open the settings\n"
@@ -253,7 +262,8 @@ QString CommandLine::helpText()
         "      --pin              Pin the capture on the screen\n"
         "  -a, --active           window: capture the focused window\n"
         "  -n, --number N         screen: capture screen N\n"
-        "      --region WxH+X+Y   gui: start with this area selected\n"
+        "      --region WxH+X+Y   gui, ask: start with this area selected\n"
+        "      --question TEXT    ask: ask this as soon as an area is selected\n"
         "      --stop-recording   Stop the screen recording in progress\n"
         "  -h, --help             Show this help\n");
 }
