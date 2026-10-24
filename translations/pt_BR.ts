@@ -4,6 +4,10 @@
 <context>
     <name>ActionsCard</name>
     <message>
+        <source>Send to nearby device</source>
+        <translation>Enviar para dispositivo próximo</translation>
+    </message>
+    <message>
         <location filename="../qml/ActionsCard.qml" line="+56"/>
         <source>Copy text (Ctrl+T)</source>
         <translation>Copiar texto (Ctrl+T)</translation>
@@ -1059,6 +1063,14 @@ Opções:
         <location filename="../qml/RecordingIndicator.qml" line="+111"/>
         <source>Stop</source>
         <translation>Parar</translation>
+    </message>
+    <message>
+        <source>Recording the screen</source>
+        <translation>Gravando a tela</translation>
+    </message>
+    <message>
+        <source>Stop to save the video</source>
+        <translation>Pare para salvar o vídeo</translation>
     </message>
 </context>
 <context>

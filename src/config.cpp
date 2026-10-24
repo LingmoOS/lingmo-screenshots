@@ -137,6 +137,11 @@ void Config::setUploadName(const QString &value) { set(QStringLiteral("Upload/na
 QString Config::uploadCommand() const { return value(QStringLiteral("Upload/command"), QString()).toString(); }
 void Config::setUploadCommand(const QString &value) { set(QStringLiteral("Upload/command"), value.trimmed()); }
 
+bool Config::nearbyShareAvailable() const
+{
+    return !QStandardPaths::findExecutable(QStringLiteral("lingmo-share")).isEmpty();
+}
+
 bool Config::uploadEnabled() const
 {
     return uploadCommand().contains(QLatin1String("%f"));

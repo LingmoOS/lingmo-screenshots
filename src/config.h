@@ -57,6 +57,8 @@ class Config : public QObject
     Q_PROPERTY(QString uploadName READ uploadName WRITE setUploadName NOTIFY changed)
     Q_PROPERTY(QString uploadCommand READ uploadCommand WRITE setUploadCommand NOTIFY changed)
     Q_PROPERTY(bool uploadEnabled READ uploadEnabled NOTIFY changed)
+    // Lingmo Share is installed: "Send to nearby device"
+    Q_PROPERTY(bool nearbyShareAvailable READ nearbyShareAvailable CONSTANT)
 
     // Beautify
     Q_PROPERTY(int beautifyPadding READ beautifyPadding WRITE setBeautifyPadding NOTIFY changed)
@@ -117,6 +119,7 @@ public:
     QString uploadCommand() const;
     void setUploadCommand(const QString &value);
     bool uploadEnabled() const;
+    bool nearbyShareAvailable() const;
 
     int beautifyPadding() const;
     void setBeautifyPadding(int value);

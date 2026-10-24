@@ -40,6 +40,38 @@ Rectangle {
         return h > 0 ? h + ":" + text : text
     }
 
+    // The recording in the status bar's Island (com.lingmo.Island): elapsed
+    // time counted by the bar from startTime, and a stop button
+    property real recordingStartedAt: 0
+
+    Connections {
+        target: recorder
+        function onRecordingChanged() {
+            if (recorder.recording)
+                control.recordingStartedAt = Date.now() - recorder.elapsed * 1000
+        }
+    }
+
+    LingmoUI.IslandActivity {
+        appId: "lingmo-screenshots"
+        active: recorder.recording && control.recordingStartedAt > 0
+        kind: "recording"
+        title: qsTr("Recording the screen")
+        subtitle: qsTr("Stop to save the video")
+        iconName: "media-record"
+        hints: ({ startTime: control.recordingStartedAt })
+        actions: [ { id: "stop", label: qsTr("Stop") } ]
+        onActionInvoked: (actionId) => {
+            if (actionId === "stop")
+                recorder.stop()
+        }
+    }
+
+    Component.onCompleted: {
+        if (recorder.recording)
+            recordingStartedAt = Date.now() - recorder.elapsed * 1000
+    }
+
     // Drag the indicator around.
     MouseArea {
         property point pressPos

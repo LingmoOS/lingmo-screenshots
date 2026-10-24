@@ -383,6 +383,16 @@ void CaptureController::upload(const QRect &crop)
     close();
 }
 
+void CaptureController::sendNearby(const QRect &crop)
+{
+    const QImage image = finalImage(crop);
+    if (image.isNull())
+        return;
+    Application::instance()->sendNearby(image);
+    remember(crop, image);
+    close();
+}
+
 void CaptureController::recognizeText(const QRect &crop)
 {
     OcrEngine *ocr = Application::instance()->ocr();

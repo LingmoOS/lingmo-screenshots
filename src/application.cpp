@@ -685,6 +685,27 @@ void Application::upload(const QImage &image)
     process->start(parts.first(), parts.mid(1));
 }
 
+void Application::sendNearby(const QImage &image)
+{
+    // Kept until lingmo-share has sent it; older ones are cleared here
+    const QString dir = QDir(QStandardPaths::writableLocation(QStandardPaths::CacheLocation)).filePath(QStringLiteral("share"));
+    QDir().mkpath(dir);
+    QFile::setPermissions(dir, QFile::ReadOwner | QFile::WriteOwner | QFile::ExeOwner);
+    const QDateTime old = QDateTime::currentDateTime().addDays(-1);
+    for (const QFileInfo &f : QDir(dir).entryInfoList(QDir::Files)) {
+        if (f.lastModified() < old)
+            QFile::remove(f.absoluteFilePath());
+    }
+    FileNamePattern::Context context;
+    context.time = QDateTime::currentDateTime();
+    context.width = image.width();
+    context.height = image.height();
+    const QString file = FileNamePattern::uniquePath(dir, m_config->fileNamePattern(), context, QStringLiteral("png"));
+    if (!image.save(file, "PNG"))
+        return;
+    QProcess::startDetached(QStringLiteral("lingmo-share"), {QStringLiteral("send"), QStringLiteral("--pick"), file});
+}
+
 void Application::playShutter()
 {
     if (!m_config->playSound())

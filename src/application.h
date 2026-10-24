@@ -101,6 +101,8 @@ public:
     void copyText(const QString &text);
     void pinImage(const QImage &image, const QPoint &pos, QScreen *screen);
     void upload(const QImage &image);
+    // Hands the capture to Lingmo Share, which asks where to send it
+    void sendNearby(const QImage &image);
     void playShutter();
     void notifySaved(const QString &path, bool copied);
 

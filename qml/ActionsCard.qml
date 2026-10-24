@@ -126,6 +126,13 @@ LingmoUI.Card {
             }
             LingmoUI.IconButton {
                 size: 32; iconSize: 18
+                visible: config.nearbyShareAvailable
+                iconName: "smartphone"
+                tipText: qsTr("Send to nearby device")
+                onClicked: editor.act("sendNearby")
+            }
+            LingmoUI.IconButton {
+                size: 32; iconSize: 18
                 iconName: "document-save-as"
                 tipText: qsTr("Save as… (Ctrl+Shift+S)")
                 onClicked: editor.act("saveAs")

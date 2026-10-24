@@ -252,6 +252,7 @@ Item {
         case "pin": view.pin(r); break
         case "openWith": view.openWith(r, argument); break
         case "upload": view.upload(r); break
+        case "sendNearby": view.sendNearby(r); break
         case "record": view.record(r); break
         case "scroll": view.scrollCapture(r); break
         case "ocr":

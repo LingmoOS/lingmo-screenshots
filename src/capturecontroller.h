@@ -68,6 +68,7 @@ public:
     Q_INVOKABLE QVariantList openWithApps() const;
     Q_INVOKABLE void openWith(const QRect &crop, const QString &appId);
     Q_INVOKABLE void upload(const QRect &crop);
+    Q_INVOKABLE void sendNearby(const QRect &crop);
     // OCR: textRecognized() or message().
     Q_INVOKABLE void recognizeText(const QRect &crop);
     Q_INVOKABLE void copyText(const QString &text);
